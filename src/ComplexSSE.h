@@ -106,7 +106,8 @@ void  mandelbrotSSEFlSmooth(const ColorPaletteUF& palette, SDL_Surface* image, i
     U32 Nints __attribute__((aligned(16))) = {};
 
     Complex onexit[SSE_size] = {};
-
+    __m128 onExitR = _mm_set_ps1(0);
+    __m128 onExitI = _mm_set_ps1(0);
     for (int h = 0; h < frameHeight; h++) {
         __m128 imCoefStored = _mm_set_ps1(float(h));
         imCoefStored = _mm_div_ps(imCoefStored, FHVector); // [h, h, h, h] / frameHeight

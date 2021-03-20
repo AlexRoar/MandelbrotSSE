@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 project(Mandelbrot)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
@@ -17,8 +17,12 @@ include_directories(${SDL2_MIXER_INCLUDE_DIRS})
 include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/lib -lSDL2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -msse4.1 -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Rpass=loop-vectorize")
 
-add_executable(Mandelbrot main.cpp src/mandutils.h src/Complex.h src/Graphics.h)
-include_directories(Mandelbrot ${SDL2_INCLUDE_DIRS})
-target_link_libraries(Mandelbrot ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
+add_executable(MandelbrotTests allTests.cpp src/mandutils.h src/Complex.h src/Graphics.h)
+include_directories(MandelbrotTests ${SDL2_INCLUDE_DIRS})
+target_link_libraries(MandelbrotTests ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
+
+add_executable(MandelbrotWalker walker.cpp src/mandutils.h src/Complex.h src/Graphics.h)
+include_directories(MandelbrotWalker ${SDL2_INCLUDE_DIRS})
+target_link_libraries(MandelbrotWalker ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})

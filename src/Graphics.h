@@ -4,9 +4,31 @@
 
 #ifndef MANDELBROT_GRAPHICS_H
 #define MANDELBROT_GRAPHICS_H
-
 #include <SDL.h>
 #include <SDL_image.h>
+
+typedef float float512 __attribute__((ext_vector_type(512)));
+typedef float float32 __attribute__((ext_vector_type(32)));
+typedef float float16 __attribute__((ext_vector_type(16)));
+typedef float float8 __attribute__((ext_vector_type(8)));
+typedef float float4 __attribute__((ext_vector_type(4)));
+typedef float float2 __attribute__((ext_vector_type(2)));
+typedef int int512 __attribute__((ext_vector_type(512)));
+typedef int int32 __attribute__((ext_vector_type(32)));
+typedef int int16 __attribute__((ext_vector_type(16)));
+typedef int int8 __attribute__((ext_vector_type(8)));
+typedef int int4 __attribute__((ext_vector_type(4)));
+typedef int int2 __attribute__((ext_vector_type(2)));
+typedef long long32 __attribute__((ext_vector_type(32)));
+typedef long long16 __attribute__((ext_vector_type(16)));
+typedef long long8 __attribute__((ext_vector_type(8)));
+typedef long long4 __attribute__((ext_vector_type(4)));
+typedef long long2 __attribute__((ext_vector_type(2)));
+typedef double double2 __attribute__((ext_vector_type(2)));
+typedef double double4 __attribute__((ext_vector_type(4)));
+typedef double double8 __attribute__((ext_vector_type(8)));
+typedef double double16 __attribute__((ext_vector_type(16)));
+typedef double double32 __attribute__((ext_vector_type(32)));
 
 void inline setPixel(SDL_Surface *surface, int x, int y, Uint32 pixel) {
     auto *const target_pixel = (Uint32 *) ((Uint8 *) surface->pixels
@@ -133,6 +155,48 @@ void mandelbrotSimple(const ColorPaletteUF& palette, SDL_Surface* image, int fra
             c = zero;
 //            printf("%d\n", int(i));
             setPixel(image, w, h, palette.color(speed,limit, c));
+        }
+    }
+}
+
+template<typename data, typename counter, typename generic, int dSize>
+void mandelbrotVectored(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, int frameHeight, generic rePos, generic imPos, generic sideWidth,
+                      int limit) {
+    frameWidth -= frameWidth % dSize;
+    imPos *= -1;
+    const data _imCoefCONST = sideWidth * frameHeight / frameWidth;
+
+    const generic r2Max = 4;
+    data _adder = {};
+    for(int i = 0; i < dSize; i++) {
+        _adder[i] = generic(i);
+    }
+
+
+    for (int h = 0; h < frameHeight; h++) {
+        const data _ciAll = imPos + _imCoefCONST * (data(h) / frameHeight - data(0.5));
+        for (int w = 0; w < frameWidth; w += dSize) {
+            data _w = w + _adder;
+            data _cr = data(rePos + sideWidth * ( _w / frameWidth - data(0.5)));
+            data _ci = _ciAll;
+            counter speed(0);
+            data _zeror(_cr);
+            data _zeroi(_ciAll);
+
+            for (int allSpeed = 0; allSpeed < limit; allSpeed++) {
+                data _zeror2 = _zeror * _zeror;
+                data _zeroi2 = _zeroi * _zeroi;
+
+                counter r2Cmp = (_zeror2 + _zeroi2) < r2Max;
+
+                speed  += -r2Cmp;
+                _zeroi = 2 * _zeror * _zeroi + _ci;
+                _zeror = _zeror2 - _zeroi2 + _cr;
+            }
+            #pragma unroll
+            for (int i = 0; i < dSize; i++) {
+                setPixel(image, w + i, h, palette.colorNoSmooth(speed[i],limit));
+            }
         }
     }
 }

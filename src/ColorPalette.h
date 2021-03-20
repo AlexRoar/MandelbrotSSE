@@ -20,25 +20,28 @@ struct ColorPaletteUF {
     size_t refSize;
 
     constexpr static int colorsLength = 2048;
+    constexpr static int pNumMax = 3;
     constexpr static ColorsPoints referencePoints1[] = {
             {0,      0xFF640700},
             {0.16,   0xFFCB6B20},
             {0.42,   0xFFFFFFED},
             {0.6425, 0xFF00AAFF},
             {0.8575, 0xF0001241},
-            {1.0, 0x00000000},
+            {1.0, 0xF0001261},
     };
 
     constexpr static ColorsPoints referencePoints2[] = {
             {0,      0xFF82020e},
-            {0.31,   0xFFFF1ae0},
-            {0.56,   0xFFFF00F6},
-            {0.78, 0xFF06FBF8},
+            {0.16,   0xFFFF1ae0},
+            {0.42,   0xFFFFFaF0},
+            {0.6425,   0xFFFF00F6},
+            {0.8575, 0xFF06FBF8},
             {1.0, 0xFF0000FF},
     };
 
     constexpr static ColorsPoints referencePoints3[] = {
             {0,      0xFFFFFFFF},
+            {0.8575,      0xFF888888},
             {1.0, 0xFF000000},
     };
 
@@ -152,9 +155,13 @@ struct ColorPaletteUF {
         free(this);
     }
 
+    static double nonLinearity(double x){
+        return log(x + 1);
+    }
+
     [[nodiscard]] Uint32 color(int i, int scale, Complex val) const {
         double smoothed = log2(log2(val.absNoSqrt()) / 2);
-        int colorI = (int)(sqrt(i + 10 - smoothed) * scale) % (colorsLength);
+        int colorI = (int)(nonLinearity((double(i) + 15.0 - smoothed) / scale) / nonLinearity(1) *  colorsLength) % (colorsLength);
         return colors[colorI];
     };
 
