@@ -20,7 +20,21 @@ struct ColorPaletteUF {
     size_t refSize;
 
     constexpr static int colorsLength = 4048;
-    constexpr static int pNumMax = 4;
+    constexpr static int pNumMax = 5;
+
+    constexpr static ColorsPoints referencePoints5[] = {
+            {0,      0xFF000000},
+            {0.5,   0xFFFFFFFF},
+            {0.75,      0xFF000000},
+            {0.875,   0xFFFFFFFF},
+            {0.9375,      0xFF000000},
+            {0.96875,   0xFFFFFFFF},
+            {0.984,   0xFF000000},
+            {0.991,   0xFFFFFFFF},
+            {0.995,   0xFF000000},
+            {1,      0xFFFFFFFF},
+    };
+
     constexpr static ColorsPoints referencePoints4[] = {
             {0,      0xFF640700},
             {0.16,   0xFFCB6B20},
@@ -71,6 +85,11 @@ struct ColorPaletteUF {
             case 3: {
                 referencePoints = referencePoints4;
                 refSize = sizeof(referencePoints4) / sizeof(ColorsPoints);
+                break;
+            }
+            case 4: {
+                referencePoints = referencePoints5;
+                refSize = sizeof(referencePoints5) / sizeof(ColorsPoints);
                 break;
             }
             case 0:

@@ -7,7 +7,7 @@
 #include <SDL.h>
 
 struct App {
-    bool smooth = true;
+    bool smooth = false;
     int fastestModeDs = 0;
     int fastestModePs = 1;
     double switchWidth = 9.35799e-05;

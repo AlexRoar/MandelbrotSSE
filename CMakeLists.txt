@@ -17,7 +17,7 @@ include_directories(${SDL2_MIXER_INCLUDE_DIRS})
 include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/lib -lSDL2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Rpass=loop-vectorize")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Rpass=loop-vectorize -pthread")
 
 add_executable(MandelbrotTests allTests.cpp src/mandutils.h src/Complex.h src/Graphics.h)
 include_directories(MandelbrotTests ${SDL2_INCLUDE_DIRS})
