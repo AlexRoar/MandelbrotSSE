@@ -19,15 +19,15 @@ struct ColorPaletteUF {
     const ColorsPoints* referencePoints;
     size_t refSize;
 
-    constexpr static int colorsLength = 2048;
-    constexpr static int pNumMax = 3;
-    constexpr static ColorsPoints referencePoints1[] = {
+    constexpr static int colorsLength = 4048;
+    constexpr static int pNumMax = 4;
+    constexpr static ColorsPoints referencePoints4[] = {
             {0,      0xFF640700},
             {0.16,   0xFFCB6B20},
             {0.42,   0xFFFFFFED},
             {0.6425, 0xFF00AAFF},
-            {0.8575, 0xF0001241},
-            {1.0, 0xF0001261},
+            {0.8575, 0xFF001241},
+            {1.0, 0xFF001261},
     };
 
     constexpr static ColorsPoints referencePoints2[] = {
@@ -36,23 +36,28 @@ struct ColorPaletteUF {
             {0.42,   0xFFFFFaF0},
             {0.6425,   0xFFFF00F6},
             {0.8575, 0xFF06FBF8},
-            {1.0, 0xFF0000FF},
+            {1, 0xFF0000FF},
     };
 
     constexpr static ColorsPoints referencePoints3[] = {
-            {0,      0xFFFFFFFF},
-            {0.8575,      0xFF888888},
-            {1.0, 0xFF000000},
+            {0,      0xFF000000},
+            {0.4575,      0xFF888888},
+            {1, 0xFFFFFFFF},
     };
+
+    constexpr static ColorsPoints referencePoints1[] = {
+            {0, 0xFF542517},
+            {0.3, 0xFF8b3872},
+            {0.5, 0xFF5872C2},
+            {0.6, 0xFF69d3f5},
+            {0.7, 0xFF65c6e9},
+            {1,   0xFFFFFFFF},
+    };
+
 
     void init(int pNo) {
         colors = static_cast<Uint32 *>(calloc(colorsLength + 1, sizeof(Uint32)));
         switch (pNo) {
-            case 0: {
-                referencePoints = referencePoints1;
-                refSize = sizeof(referencePoints1) / sizeof(ColorsPoints);
-                break;
-            }
             case 1: {
                 referencePoints = referencePoints2;
                 refSize = sizeof(referencePoints2) / sizeof(ColorsPoints);
@@ -63,6 +68,12 @@ struct ColorPaletteUF {
                 refSize = sizeof(referencePoints3) / sizeof(ColorsPoints);
                 break;
             }
+            case 3: {
+                referencePoints = referencePoints4;
+                refSize = sizeof(referencePoints4) / sizeof(ColorsPoints);
+                break;
+            }
+            case 0:
             default: {
                 referencePoints = referencePoints1;
                 refSize = sizeof(referencePoints1) / sizeof(ColorsPoints);
@@ -70,10 +81,9 @@ struct ColorPaletteUF {
             }
         }
         monotonicCubicInterpolation();
-
     }
 
-    void monotonicCubicInterpolation() {
+    void monotonicCubicInterpolation() const {
         struct CalcData {
             double dxs, dys, ms;
         };
@@ -159,15 +169,21 @@ struct ColorPaletteUF {
         return log(x + 1);
     }
 
+    static int min(int a, int b){
+        return a < b ? a : b;
+    }
+
     [[nodiscard]] Uint32 color(int i, int scale, Complex val) const {
-        double smoothed = log2(log2(val.absNoSqrt()) / 2);
-        int colorI = (int)(nonLinearity((double(i) + 15.0 - smoothed) / scale) / nonLinearity(1) *  colorsLength) % (colorsLength);
+        float nsmooth = i;
+        if (val.abs() > 1)
+            nsmooth = float(i + 1) - float(log2(log(val.abs())));
+        int colorI = int(nsmooth / float(scale) * float(colorsLength - 1)) % colorsLength;
         return colors[colorI];
     };
 
     [[nodiscard]] Uint32 colorNoSmooth(int i, int scale) const {
-        int colorI = (int)(sqrt(i + 10 + 0.4) * scale) % (colorsLength);
-        return colors[colorI];
+        int colorI = int(float(i) / float(scale) * float(colorsLength - 1));
+        return colors[colorI % colorsLength];
     };
 };
 

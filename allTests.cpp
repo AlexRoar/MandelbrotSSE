@@ -23,6 +23,9 @@ int main() {
     plt = showPalette(2);
     saveSurface(plt, "plt2.png");
     SDL_FreeSurface(plt);
+    plt = showPalette(3);
+    saveSurface(plt, "plt3.png");
+    SDL_FreeSurface(plt);
 
     SDL_Surface *image = createSurface(frameWidth, frameHeight);
     ColorPaletteUF palette = {};

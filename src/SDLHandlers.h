@@ -7,8 +7,9 @@
 #include <SDL.h>
 
 struct App {
-    int fastestModeDs = 4;
-    int fastestModePs = 7;
+    bool smooth = true;
+    int fastestModeDs = 0;
+    int fastestModePs = 1;
     double switchWidth = 9.35799e-05;
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
@@ -17,18 +18,91 @@ struct App {
     double moveSpeed = 50;
     double limitSpeed = 1.15;
     bool antiAlias = false;
-    int frameWidth = 1920;
-    int frameHeight = 1080;
+    int frameWidth = 640;
+    int frameHeight = 420;
     int pNum = 0;
     SDL_DisplayMode dm;
     ColorPaletteUF palette = {};
     SDL_Surface *image = nullptr;
-    double rePos = -0.4;
-    double imPos = 0.6;
+    double rePos = 0;
+    double imPos = 0;
     double sideWidth = 2;
-    int limitIter = 250;
+    int limitIter = 256;
 };
 App thisApp;
+
+void rerender(SDL_Window *pWindow, SDL_Renderer *pRenderer, SDL_Surface *image) {
+    if (thisApp.smooth){
+        switch (thisApp.renderType) {
+            case 0: {
+                printf("SSE double smooth render type\n");
+                mandelbrotSSEDlSmooth(thisApp.palette,
+                                      image,
+                                      thisApp.frameWidth,
+                                      thisApp.frameHeight,
+                                      thisApp.rePos,
+                                      thisApp.imPos,
+                                      thisApp.sideWidth,
+                                      thisApp.limitIter);
+                break;
+            }
+            case 1: {
+                printf("SSE float smooth render type\n");
+                mandelbrotSSEFlSmooth(thisApp.palette,
+                                      image,
+                                      thisApp.frameWidth,
+                                      thisApp.frameHeight,
+                                      thisApp.rePos,
+                                      thisApp.imPos,
+                                      thisApp.sideWidth,
+                                      thisApp.limitIter);
+                break;
+            }
+
+            default: {
+                thisApp.renderType = 0;
+                rerender(pWindow, pRenderer, image);
+                return;
+            }
+        }
+    } else {
+        switch (thisApp.renderType) {
+            case 0: {
+                printf("OpenCL double8 render type (fastest)\n");
+                mandelbrotVectored<double8, long8, double, 8>(thisApp.palette,
+                                                              image,
+                                                              thisApp.frameWidth,
+                                                              thisApp.frameHeight,
+                                                              thisApp.rePos,
+                                                              thisApp.imPos,
+                                                              thisApp.sideWidth,
+                                                              thisApp.limitIter);
+                break;
+            }
+            case 1: {
+                printf("OpenCL float32 render type (fastest)\n");
+                mandelbrotVectored<float32, int32, float, 32>(thisApp.palette,
+                                                              image,
+                                                              thisApp.frameWidth,
+                                                              thisApp.frameHeight,
+                                                              thisApp.rePos,
+                                                              thisApp.imPos,
+                                                              thisApp.sideWidth,
+                                                              thisApp.limitIter);
+                break;
+            }
+            default: {
+                thisApp.renderType = 0;
+                rerender(pWindow, pRenderer, image);
+                return;
+            }
+        }
+    }
+
+    if (thisApp.antiAlias)
+        antialiasImage(image, 1, 0.2);
+}
+
 void hadlerUp(SDL_Event &e) {
     thisApp.imPos += thisApp.sideWidth / thisApp.moveSpeed;
 }
@@ -59,6 +133,14 @@ void hadlerX(SDL_Event &e) {
         thisApp.renderType = thisApp.fastestModeDs;
     else
         thisApp.renderType = thisApp.fastestModePs;
+}
+
+void hadlerC(SDL_Event &e) {
+    saveSurface(thisApp.image, "snapdot.png");
+}
+
+void hadlerR(SDL_Event &e) {
+    thisApp.smooth = !thisApp.smooth;
 }
 
 void hadlerW(SDL_Event &e) {
@@ -93,6 +175,18 @@ void hadlerF(SDL_Event &e) {
     thisApp.image = SDL_GetWindowSurface(thisApp.pWindow);
 }
 
+void hadlerT(SDL_Event &e) {
+    int lastW = thisApp.frameWidth, lastH = thisApp.frameHeight;
+    thisApp.frameWidth = 15360;
+    thisApp.frameHeight = 8640;
+    SDL_Surface* high = createSurface(thisApp.frameWidth, thisApp.frameHeight);
+    rerender(thisApp.pWindow, thisApp.pRenderer,high);
+    saveSurface(high, "highres.png");
+    SDL_FreeSurface(high);
+    thisApp.frameWidth = lastW;
+    thisApp.frameHeight = lastH;
+}
+
 struct KeyboardMap {
     SDL_Scancode code;
 
@@ -112,5 +206,8 @@ constexpr KeyboardMap keyboardHandlers[] = {
         {SDL_SCANCODE_Q,     hadlerQ},
         {SDL_SCANCODE_E,     hadlerE},
         {SDL_SCANCODE_F,     hadlerF},
+        {SDL_SCANCODE_C,     hadlerC},
+        {SDL_SCANCODE_R,     hadlerR},
+        {SDL_SCANCODE_T,     hadlerT},
 };
 #endif //MANDELBROT_SDLHANDLERS_H

@@ -87,11 +87,22 @@ SDL_Surface *showPalette(int pNo) {
     ColorPaletteUF palette = {};
     palette.init(pNo);
     const int height = 64;
-    auto surface = createSurface(ColorPaletteUF::colorsLength + 1, height);
+    auto surface = createSurface(ColorPaletteUF::colorsLength + 1, height * 3);
     for (int i = 0; i < ColorPaletteUF::colorsLength; i++) {
         for (int j = 0; j < height; j++)
             setPixel(surface, i % surface->w, (i / surface->w) * height + j, palette.colors[i]);
     }
+
+    for (int i = 0; i < ColorPaletteUF::colorsLength; i++) {
+        for (int j = 0; j < height; j++)
+            setPixel(surface, i % surface->w, height + (i / surface->w) * height + j, palette.colorNoSmooth(i, ColorPaletteUF::colorsLength));
+    }
+
+    for (int i = 0; i < ColorPaletteUF::colorsLength; i++) {
+        for (int j = 0; j < height; j++)
+            setPixel(surface, i % surface->w, height * 2 + (i / surface->w) * height + j, palette.color(i, ColorPaletteUF::colorsLength, {-0.70, 0.6}));
+    }
+
     palette.dest();
     return surface;
 }
