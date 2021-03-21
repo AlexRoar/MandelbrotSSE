@@ -6,6 +6,7 @@
 #define MANDELBROT_GRAPHICS_H
 #include <SDL.h>
 #include <SDL_image.h>
+#include <thread>
 
 typedef float float512 __attribute__((ext_vector_type(512)));
 typedef float float32 __attribute__((ext_vector_type(32)));
@@ -29,6 +30,7 @@ typedef double double4 __attribute__((ext_vector_type(4)));
 typedef double double8 __attribute__((ext_vector_type(8)));
 typedef double double16 __attribute__((ext_vector_type(16)));
 typedef double double32 __attribute__((ext_vector_type(32)));
+
 
 void inline setPixel(SDL_Surface *surface, int x, int y, Uint32 pixel) {
     auto *const target_pixel = (Uint32 *) ((Uint8 *) surface->pixels
@@ -160,8 +162,8 @@ void mandelbrotSimple(const ColorPaletteUF& palette, SDL_Surface* image, int fra
 }
 
 template<typename data, typename counter, typename generic, int dSize>
-void mandelbrotVectored(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, int frameHeight, generic rePos, generic imPos, generic sideWidth,
-                      int limit) {
+void threadedRend(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, int frameHeight, generic rePos, generic imPos, generic sideWidth,
+                  int limit, int id=0, int threadsCount=8){
     frameWidth -= frameWidth % dSize;
     imPos *= -1;
     const data _imCoefCONST = sideWidth * frameHeight / frameWidth;
@@ -172,8 +174,7 @@ void mandelbrotVectored(const ColorPaletteUF& palette, SDL_Surface* image, int f
         _adder[i] = generic(i);
     }
 
-
-    for (int h = 0; h < frameHeight; h++) {
+    for (int h = id; h < frameHeight; h+=threadsCount) {
         const data _ciAll = imPos + _imCoefCONST * (data(h) / frameHeight - data(0.5));
         for (int w = 0; w < frameWidth; w += dSize) {
             data _w = w + _adder;
@@ -199,6 +200,22 @@ void mandelbrotVectored(const ColorPaletteUF& palette, SDL_Surface* image, int f
             }
         }
     }
+}
+
+template<typename data, typename counter, typename generic, int dSize>
+void mandelbrotVectored(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, int frameHeight, generic rePos, generic imPos, generic sideWidth,
+                        int limit, int threadCount = 8) {
+    using std::thread;
+    auto** threads = static_cast<thread**>(calloc(threadCount, sizeof(thread*)));
+
+    for (int i=0; i < threadCount; i++) {
+        threads[i] = new thread(threadedRend<data, counter, generic, dSize>, palette, image, frameWidth, frameHeight, rePos, imPos,sideWidth, limit, i, threadCount);
+    }
+    for (int i=0; i < threadCount; i++) {
+        threads[i]->join();
+        delete threads[i];
+    }
+    free(threads);
 }
 
 #endif //MANDELBROT_GRAPHICS_H

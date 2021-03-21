@@ -1,97 +1,144 @@
 #include "src/mandutils.h"
 #include "src/Graphics.h"
 #include "src/ComplexSSE.h"
-#include <sys/time.h>
+#include "src/SDLHandlers.h"
 #include <cstdio>
 #include <SDL.h>
 
-struct App {
-    constexpr static int frameWidth = 1920 / 2;
-    constexpr static int frameHeight = 1080 / 2;
-    int pNum = 0;
-    ColorPaletteUF palette = {};
-    SDL_Surface *image = nullptr;
-    double rePos = 0;
-    double imPos = 0;
-    double sideWidth = 2;
-    int limitIter = 250;
-};
 
-App thisApp;
+bool init(SDL_Window *&pWindow, SDL_Renderer *&pRenderer);
 
-bool init(SDL_Window*& pWindow, SDL_Renderer*& pRenderer);
 void close(SDL_Window *pWindow, SDL_Renderer *pRenderer);
-void PrintKeyInfo( SDL_KeyboardEvent *key );
 
-void hadlerUp(SDL_Event& e){
-    thisApp.imPos += thisApp.sideWidth / 100;
-}
-void hadlerDown(SDL_Event& e){
-    thisApp.imPos -= thisApp.sideWidth / 100;
-}
-void hadlerLeft(SDL_Event& e){
-    thisApp.rePos -= thisApp.sideWidth / 100;
-}
-void hadlerRight(SDL_Event& e){
-    thisApp.rePos += thisApp.sideWidth / 100;
-}
-void hadlerLshift(SDL_Event& e){
-    thisApp.sideWidth /= 1.2;
-}
-void hadlerSpace(SDL_Event& e){
-    thisApp.sideWidth *=  1.2;
-}
-void hadlerW(SDL_Event& e){
-    thisApp.limitIter *=  2;
-}
-void hadlerS(SDL_Event& e){
-    thisApp.limitIter /=  2;
+void PrintKeyInfo(SDL_KeyboardEvent *key);
+
+
+void rerender(SDL_Window *pWindow, SDL_Renderer *pRenderer, SDL_Surface *image) {
+    switch (thisApp.renderType) {
+        case 0: {
+            printf("SSE double smooth render type\n");
+            mandelbrotSSEDlSmooth(thisApp.palette,
+                                  image,
+                                  thisApp.frameWidth,
+                                  thisApp.frameHeight,
+                                  thisApp.rePos,
+                                  thisApp.imPos,
+                                  thisApp.sideWidth,
+                                  thisApp.limitIter);
+            break;
+        }
+        case 1: {
+            printf("SSE double render type\n");
+            mandelbrotSSEDl(thisApp.palette,
+                            image,
+                            thisApp.frameWidth,
+                            thisApp.frameHeight,
+                            thisApp.rePos,
+                            thisApp.imPos,
+                            thisApp.sideWidth,
+                            thisApp.limitIter);
+            break;
+        }
+        case 2: {
+            printf("SSE float smooth render type\n");
+            mandelbrotSSEFlSmooth(thisApp.palette,
+                                  image,
+                                  thisApp.frameWidth,
+                                  thisApp.frameHeight,
+                                  thisApp.rePos,
+                                  thisApp.imPos,
+                                  thisApp.sideWidth,
+                                  thisApp.limitIter);
+            break;
+        }
+        case 3: {
+            printf("SSE float render type\n");
+            mandelbrotSSEFl(thisApp.palette,
+                            image,
+                            thisApp.frameWidth,
+                            thisApp.frameHeight,
+                            thisApp.rePos,
+                            thisApp.imPos,
+                            thisApp.sideWidth,
+                            thisApp.limitIter);
+            break;
+        }
+        case 4: {
+            printf("OpenCL double8 render type (fastest)\n");
+            mandelbrotVectored<double8, long8, double, 8>(thisApp.palette,
+                                                          image,
+                                                          thisApp.frameWidth,
+                                                          thisApp.frameHeight,
+                                                          thisApp.rePos,
+                                                          thisApp.imPos,
+                                                          thisApp.sideWidth,
+                                                          thisApp.limitIter);
+            break;
+        }
+        case 5: {
+            printf("OpenCL double16 render type\n");
+            mandelbrotVectored<double16, long16, double, 16>(thisApp.palette,
+                                                             image,
+                                                             thisApp.frameWidth,
+                                                             thisApp.frameHeight,
+                                                             thisApp.rePos,
+                                                             thisApp.imPos,
+                                                             thisApp.sideWidth,
+                                                             thisApp.limitIter);
+            break;
+        }
+        case 6: {
+            printf("OpenCL float16 render type\n");
+            mandelbrotVectored<float16, int16, float, 16>(thisApp.palette,
+                                                          image,
+                                                          thisApp.frameWidth,
+                                                          thisApp.frameHeight,
+                                                          thisApp.rePos,
+                                                          thisApp.imPos,
+                                                          thisApp.sideWidth,
+                                                          thisApp.limitIter);
+            break;
+        }
+        case 7: {
+            printf("OpenCL float32 render type (fastest)\n");
+            mandelbrotVectored<float32, int32, float, 32>(thisApp.palette,
+                                                          image,
+                                                          thisApp.frameWidth,
+                                                          thisApp.frameHeight,
+                                                          thisApp.rePos,
+                                                          thisApp.imPos,
+                                                          thisApp.sideWidth,
+                                                          thisApp.limitIter);
+            break;
+        }
+        default: {
+            thisApp.renderType = 0;
+            rerender(pWindow, pRenderer, image);
+            return;
+        }
+    }
+
+    if (thisApp.antiAlias)
+        antialiasImage(image, 1, 0.2);
 }
 
-void hadlerA(SDL_Event& e){
-    thisApp.pNum = (thisApp.pNum + 1) % ColorPaletteUF::pNumMax;
-    thisApp.palette.dest();
-    thisApp.palette.init(thisApp.pNum);
-}
-
-struct KeyboardMap {
-    SDL_Scancode code;
-    void (*handler)(SDL_Event& e);
-};
-
-constexpr KeyboardMap keyboardHandlers[] = {
-        {SDL_SCANCODE_UP, hadlerUp},
-        {SDL_SCANCODE_DOWN, hadlerDown},
-        {SDL_SCANCODE_LEFT, hadlerLeft},
-        {SDL_SCANCODE_RIGHT, hadlerRight},
-        {SDL_SCANCODE_LSHIFT, hadlerLshift},
-        {SDL_SCANCODE_SPACE, hadlerSpace},
-        {SDL_SCANCODE_W, hadlerW},
-        {SDL_SCANCODE_S, hadlerS},
-        {SDL_SCANCODE_A, hadlerA},
-};
-
-void rerender(SDL_Window *pWindow, SDL_Renderer *pRenderer, SDL_Surface* image) {
-    mandelbrotVectored<double8, long8, double, 8>(thisApp.palette,
-                                                  image,
-                                                  App::frameWidth,
-                                                  App::frameHeight,
-                                                  thisApp.rePos,
-                                                  thisApp.imPos,
-                                                  thisApp.sideWidth,
-                                                  thisApp.limitIter);
-    antialiasImage(image, 1, 0.2);
-}
-
-int main(){
+int main() {
     SDL_Window *pWindow = nullptr;
     SDL_Renderer *pRenderer = nullptr;
     init(pWindow, pRenderer);
 
+    thisApp.pWindow = pWindow;
+    thisApp.pWindow = pWindow;
     thisApp.image = SDL_GetWindowSurface(pWindow);
     thisApp.palette.init(thisApp.pNum);
 
     rerender(pWindow, pRenderer, thisApp.image);
+    SDL_UpdateWindowSurface(pWindow);
+
+    if (SDL_GetDesktopDisplayMode(0, &thisApp.dm)) {
+        printf("Error getting desktop display mode\n");
+        return EXIT_FAILURE;
+    }
 
     bool quit = false;
     SDL_Event e;
@@ -104,17 +151,20 @@ int main(){
                 }
                 case SDL_KEYDOWN: {
                     bool changed = false;
-                    for(int i = 0; i < sizeof(keyboardHandlers) / sizeof(KeyboardMap); i++) {
-                        if (keyboardHandlers[i].code == e.key.keysym.scancode){
+                    for (int i = 0; i < sizeof(keyboardHandlers) / sizeof(KeyboardMap); i++) {
+                        if (keyboardHandlers[i].code == e.key.keysym.scancode) {
                             keyboardHandlers[i].handler(e);
                             changed = true;
                         }
                     }
-                    if (changed){
+                    if (changed) {
+                        printf("Positioning... R(%.20lg) I(%.20lg) W(%.20lg) It(%d)\n",
+                               thisApp.rePos, thisApp.imPos,
+                               thisApp.sideWidth, thisApp.limitIter);
                         rerender(pWindow, pRenderer, thisApp.image);
                         SDL_UpdateWindowSurface(pWindow);
+                        SDL_FlushEvent(SDL_KEYDOWN);
                     }
-                    PrintKeyInfo( &e.key );
                 }
             }
         }
@@ -123,28 +173,29 @@ int main(){
     close(pWindow, pRenderer);
 }
 
-void PrintKeyInfo( SDL_KeyboardEvent *key ){
+void PrintKeyInfo(SDL_KeyboardEvent *key) {
     /* Is it a release or a press? */
-    if( key->type == SDL_KEYUP )
-        printf( "Release:- " );
+    if (key->type == SDL_KEYUP)
+        printf("Release:- ");
     else
-        printf( "Press:- " );
+        printf("Press:- ");
 
     /* Print the hardware scancode first */
-    printf( "Scancode: 0x%02X", key->keysym.scancode );
+    printf("Scancode: 0x%02X", key->keysym.scancode);
     /* Print the name of the key */
-    printf( ", Name: %s", SDL_GetKeyName( key->keysym.sym ) );
-    printf( "\n" );
+    printf(", Name: %s", SDL_GetKeyName(key->keysym.sym));
+    printf("\n");
 }
 
 
-bool init(SDL_Window*& pWindow, SDL_Renderer*& pRenderer) {
+bool init(SDL_Window *&pWindow, SDL_Renderer *&pRenderer) {
     SDL_Init(SDL_INIT_VIDEO);
-    pWindow = SDL_CreateWindow("Mandelbrot", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, thisApp.frameWidth, thisApp.frameHeight, 0);
+    pWindow = SDL_CreateWindow("Mandelbrot", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, thisApp.frameWidth,
+                               thisApp.frameHeight, 0);
 //    SDL_CreateWindowAndRenderer(thisApp.frameWidth, thisApp.frameHeight, 0, &pWindow, &pRenderer);
-//    SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
-//    SDL_RenderClear(pRenderer);
-//    SDL_RenderPresent(pRenderer);
+    SDL_SetWindowFullscreen(pWindow, 0);
+    SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);
+    SDL_RenderClear(pRenderer);
     return true;
 }
 

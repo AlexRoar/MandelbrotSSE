@@ -9,7 +9,7 @@ constexpr int frameHeight = 1080;
 
 constexpr double rePos = -0.021443584518319098;
 constexpr double imPos = 0.7103940042262454;
-constexpr double sideWidth = 0.00317024843773815;
+constexpr double sideWidth = 0.0000317024843773815;
 constexpr int limitIter = 256;
 
 int main() {
@@ -40,6 +40,7 @@ int main() {
     const auto vectoredFloat32 = mandelbrotVectored<float32, int32, float, 32>;
     const auto vectoredFloat512 = mandelbrotVectored<float512, int512, float, 512>;
 
+    int thCount = 1;
 
     TIME({
              mandelbrotSimple(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
@@ -48,67 +49,67 @@ int main() {
              saveSurface(image, "set.png");
          }, "Simple");
     TIME({
-             vectoredFloat2(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredFloat2(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVF2.png");
          }, "Simple vector float2");
     TIME({
-             vectoredFloat4(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredFloat4(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVF4.png");
          }, "Simple vector float4");
     TIME({
-             vectoredFloat8(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredFloat8(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVF8.png");
          }, "Simple vector float8");
     TIME({
-             vectoredFloat16(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredFloat16(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVF16.png");
          }, "Simple vector float16");
     TIME({
-             vectoredFloat32(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredFloat32(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVF32.png");
          }, "Simple vector float32");
     TIME({
-             vectoredFloat512(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredFloat512(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVF512.png");
          }, "Simple vector float512");
     TIME({
-             vectoredDouble(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredDouble(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVD2.png");
          }, "Simple vector double2");
     TIME({
-             vectoredDouble4(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredDouble4(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVD4.png");
          }, "Simple vector double4");
     TIME({
-             vectoredDouble8(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredDouble8(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVD8.png");
          }, "Simple vector double8");
     TIME({
-             vectoredDouble16(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredDouble16(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVD16.png");
          }, "Simple vector double16");
     TIME({
-             vectoredDouble32(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             vectoredDouble32(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
              antialiasImage(image, 1, 0.4);
              saveSurface(image, "setVD32.png");

@@ -23,6 +23,10 @@ add_executable(MandelbrotTests allTests.cpp src/mandutils.h src/Complex.h src/Gr
 include_directories(MandelbrotTests ${SDL2_INCLUDE_DIRS})
 target_link_libraries(MandelbrotTests ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
 
-add_executable(MandelbrotWalker walker.cpp src/mandutils.h src/Complex.h src/Graphics.h)
+add_executable(MandelbrotWalker walker.cpp src/mandutils.h src/Complex.h src/Graphics.h src/SDLHandlers.h)
 include_directories(MandelbrotWalker ${SDL2_INCLUDE_DIRS})
 target_link_libraries(MandelbrotWalker ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
+
+add_executable(MandelbrotFastest fastest.cpp src/mandutils.h src/Complex.h src/Graphics.h src/SDLHandlers.h)
+include_directories(MandelbrotFastest ${SDL2_INCLUDE_DIRS})
+target_link_libraries(MandelbrotFastest ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
