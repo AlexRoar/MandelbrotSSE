@@ -4,6 +4,7 @@
 #include "src/SDLHandlers.h"
 #include <cstdio>
 #include <SDL.h>
+#include "src/CUDA/CUDACommon.cuh"
 
 
 bool init(SDL_Window *&pWindow, SDL_Renderer *&pRenderer);
@@ -17,6 +18,8 @@ int main() {
     SDL_Window *pWindow = nullptr;
     SDL_Renderer *pRenderer = nullptr;
     init(pWindow, pRenderer);
+
+//    mandelbrotCUDA();
 
     thisApp.pWindow = pWindow;
     thisApp.pWindow = pWindow;

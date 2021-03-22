@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
-project(Mandelbrot)
+
+project(Mandelbrot LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -18,15 +19,20 @@ include_directories(${SDL2_IMAGE_INCLUDE_DIRS})
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/lib -lSDL2")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Rpass=loop-vectorize -pthread")
+set(CMAKE_CUDA_FLAGS "")
 
 add_executable(MandelbrotTests allTests.cpp src/mandutils.h src/Complex.h src/Graphics.h)
 include_directories(MandelbrotTests ${SDL2_INCLUDE_DIRS})
-target_link_libraries(MandelbrotTests ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
+target_link_libraries(MandelbrotTests ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY})
 
 add_executable(MandelbrotWalker walker.cpp src/mandutils.h src/Complex.h src/Graphics.h src/SDLHandlers.h)
 include_directories(MandelbrotWalker ${SDL2_INCLUDE_DIRS})
-target_link_libraries(MandelbrotWalker ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
+target_link_libraries(MandelbrotWalker ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY})
 
 add_executable(MandelbrotFastest fastest.cpp src/mandutils.h src/Complex.h src/Graphics.h src/SDLHandlers.h)
 include_directories(MandelbrotFastest ${SDL2_INCLUDE_DIRS})
-target_link_libraries(MandelbrotFastest ${SDL2_LIBRARIES} ${SDL2_MIXER_LIBRARY} ${SDL2_IMAGE_LIBRARY})
+target_link_libraries(MandelbrotFastest ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY})
+
+add_executable(CatPlace placeCat.cpp src/mandutils.h src/Complex.h src/Graphics.h src/SDLHandlers.h)
+include_directories(CatPlace ${SDL2_INCLUDE_DIRS})
+target_link_libraries(CatPlace ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARY})

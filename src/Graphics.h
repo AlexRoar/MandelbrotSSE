@@ -7,6 +7,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <thread>
+#include "ColorPalette.h"
 
 typedef float float512 __attribute__((ext_vector_type(512)));
 typedef float float32 __attribute__((ext_vector_type(32)));
@@ -38,10 +39,17 @@ void inline setPixel(SDL_Surface *surface, int x, int y, Uint32 pixel) {
                                            + x * surface->format->BytesPerPixel);
     *target_pixel = pixel;
 }
-Uint32 getPixel(SDL_Surface *surface, int x, int y) {
+
+inline Uint32 getPixel(SDL_Surface *surface, int x, int y) {
     return *(Uint32 *) ((Uint8 *) surface->pixels
                                            + y * surface->pitch
                                            + x * surface->format->BytesPerPixel);
+}
+
+inline Uint32* getPixelPtr(SDL_Surface *surface, int x, int y) {
+    return (Uint32 *) ((Uint8 *) surface->pixels
+                        + y * surface->pitch
+                        + x * surface->format->BytesPerPixel);
 }
 
 void WipeSurface(SDL_Surface *surface) {
