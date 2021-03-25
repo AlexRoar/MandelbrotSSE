@@ -30,14 +30,20 @@ SDL_Surface* simpleOverlay(SDL_Surface *tableOld, SDL_Surface *cat) {
 SDL_Surface* sseOverlay(SDL_Surface *tableOld, SDL_Surface *cat) {
     SDL_Surface* table = createSurface(tableOld->w, tableOld->h);
     SDL_BlitSurface(tableOld, NULL,table, NULL);
+    auto effectiveW = cat->w - cat->w % 4;
     for (int h = 0; h < cat->h; h++) {
-        for (int w = 0; w < cat->w; w+=4) {
+        for (int w = 0; w < effectiveW; w+=4) {
             Uint32* pixelFront = getPixelPtr(cat, w, h);
             Uint32* pixelBack = getPixelPtr(table, w + catPosix, h + catPosiy);
             Uint32 final = 0;
 
             __m128i frLoaded = _mm_load_si128((__m128i*)pixelFront);
             __m128i bgLoaded = _mm_load_si128((__m128i*)pixelBack);
+
+            __m128i frLoadedLo = _mm_cvtepu8_epi16(frLoaded);
+            __m128i bgLoadedLo = _mm_cvtepu8_epi16(bgLoaded);
+            __m128i frLoadedHi = _mm_shuffle_ps((__m128)frLoaded, (__m128)frLoaded, _MM_SHUFFLE(3,2,3,2));
+            __m128i bgLoadedHi = _mm_cvtepu8_epi16(bgLoaded);
 
 
             unsigned char alpha = ((unsigned char*)&pixelFront)[3];
