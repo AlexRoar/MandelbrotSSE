@@ -21,12 +21,12 @@ int main() {
     int thCount = 8;
 
     TIME({
-             fastest(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
+             fastestFloat(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter, thCount);
              SET_TIME;
 //             antialiasImage(image, 1, 0.4);
              saveSurface(image, "fastest.png");
          }, "Fastest: ");
-    const auto fastestCuda = mandelbrotRender<double>;
+    const auto fastestCuda = mandelbrotRender<float>;
 
     TIME({
              fastestCuda(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);

@@ -28,13 +28,13 @@ __device__ __host__ void Complex<c_type>::Delete() {
 }
 
 template<typename c_type>
-__device__ __host__ void Complex<c_type>::add(const Complex &other) {
+__device__ __host__ __forceinline__ void Complex<c_type>::add(const Complex &other) {
     r += other.r;
     i += other.i;
 }
 
 template<typename c_type>
-__device__ __host__ void Complex<c_type>::sub(const Complex &other) {
+__device__ __host__ __forceinline__ void Complex<c_type>::sub(const Complex &other) {
     r -= other.r;
     i -= other.i;
 }
@@ -50,7 +50,7 @@ __device__ __host__ c_type Complex<c_type>::absNoSqrt() const {
 }
 
 template<typename c_type>
-__device__ __host__ void Complex<c_type>::mul(const Complex &other) {
+__device__ __host__ __forceinline__ void Complex<c_type>::mul(const Complex &other) {
     const c_type lastR = r;
     r = r * other.r - i * other.i;
     i = i * other.r + other.i + lastR;

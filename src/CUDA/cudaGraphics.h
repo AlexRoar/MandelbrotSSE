@@ -5,6 +5,9 @@
 #ifndef MANDELBROT_CUDAGRAPHICS_H
 #define MANDELBROT_CUDAGRAPHICS_H
 
+#define MAX_THREADS_PER_BLOCK 90
+#define MIN_BLOCKS_PER_MP     32
+
 static void inline setPixel(SDL_Surface *surface, int x, int y, Uint32 pixel) {
     auto *const target_pixel = (Uint32 *) ((Uint8 *) surface->pixels
                                            + y * surface->pitch
@@ -63,28 +66,13 @@ static void saveSurface(SDL_Surface *surface, const char *file) {
     IMG_SavePNG(surface, file);
 }
 
-__device__ __host__
-static inline void setPixelCuda(SDL_Surface *surface, int x, int y, Uint32 pixel) {
-    auto *const target_pixel = (Uint32 *) ((Uint8 *) surface->pixels
-                                           + y * surface->pitch
-                                           + x * surface->format->BytesPerPixel);
-    *target_pixel = pixel;
-}
-
-__device__ __host__
-static inline Uint32 getPixelCuda(SDL_Surface *surface, int x, int y) {
-    return *(Uint32 *) ((Uint8 *) surface->pixels
-                        + y * surface->pitch
-                        + x * surface->format->BytesPerPixel);
-}
-
 
 template <typename c_type>
 __device__ unsigned mandelbrotSpeed(const unsigned limitIt, const c_type limitSphere, const Complex<c_type>& c){
     unsigned speed = 0;
     Complex<c_type> zero = {0, 0};
     #pragma unroll 128
-    while(speed < limitIt && zero.i + zero.r < limitSphere * limitSphere) {
+    while(speed < limitIt && zero.i * zero.r < limitSphere) {
         zero.square();
         zero.add(c);
         speed++;
@@ -92,20 +80,8 @@ __device__ unsigned mandelbrotSpeed(const unsigned limitIt, const c_type limitSp
     return speed;
 }
 
-__host__ __device__
-static inline SDL_Surface *getSurfaceFrom(const SDL_Surface *image, void *imageDevicePixels) {
-    return SDL_CreateRGBSurfaceFrom(imageDevicePixels,
-                                    image->w,
-                                    image->h,
-                                    32,
-                                    image->pitch,
-                                    image->format->Rmask,
-                                    image->format->Gmask,
-                                    image->format->Bmask,
-                                    image->format->Amask);
-}
-
 template<typename c_type>
+//__launch_bounds__(MAX_THREADS_PER_BLOCK, MIN_BLOCKS_PER_MP)
 __global__ void
 mandelbrotProcess(Uint8 *imagePixels,
                   const unsigned pitch,
@@ -118,7 +94,6 @@ mandelbrotProcess(Uint8 *imagePixels,
                   const int limit,
                   const dim3 gridInside,
                   const ColorPaletteUF* palette) {
-
     const unsigned pixelx = blockDim.x * (blockIdx.x * gridInside.x) + threadIdx.x* gridInside.x;
     const unsigned pixely = blockDim.y * (blockIdx.y * gridInside.y) + threadIdx.y* gridInside.y;
     if (pixely >= frameHeight || pixelx >= frameWidth)
@@ -131,7 +106,7 @@ mandelbrotProcess(Uint8 *imagePixels,
 #pragma unroll
         for (unsigned w = pixelx; w < pixelx + gridInside.x && w < frameWidth; w++) {
             Complex<c_type> c = {rePos + sideWidth * ( c_type(w) / frameWidth - 0.5 ), ci};
-            Uint32 sp = mandelbrotSpeed<c_type>(limit, 2, c);
+            Uint32 sp = mandelbrotSpeed<c_type>(limit, 4, c);
             sp = palette->colorNoSmooth(sp, limit);
             *((Uint32 *) ((Uint8 *) imagePixels
                           + h * pitch
@@ -159,11 +134,11 @@ void mandelbrotRender(const ColorPaletteUF& palette, SDL_Surface* image, unsigne
     ColorPaletteUF* devicePalette = nullptr;
     cudaMallocManaged((void**) &devicePalette, sizeof (ColorPaletteUF));
     *devicePalette = palette;
-    cudaMallocManaged((void **)(&(devicePalette->colors)), ColorPaletteUF::colorsLength * sizeof(Uint32));
+    cudaMalloc((void **)(&(devicePalette->colors)), ColorPaletteUF::colorsLength * sizeof(Uint32));
     cudaMemcpy(devicePalette->colors, palette.colors, ColorPaletteUF::colorsLength * sizeof(Uint32), cudaMemcpyHostToDevice);
 
     const dim3 grid(32, 32, 1);
-    const dim3 gridInside(2, 2, 1);
+    const dim3 gridInside(4, 4, 1);
     const dim3 gridProcess(frameWidth / (grid.x * gridInside.x) + 1 , frameHeight / (grid.y * gridInside.y) + 1, 1);
 //    printf("Launch with (%d %d %d), (%d %d %d)\n", gridProcess.x, gridProcess.y, gridProcess.z,
 //           grid.x, grid.y, grid.z);
