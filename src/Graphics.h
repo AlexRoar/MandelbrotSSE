@@ -8,26 +8,27 @@
 #include <SDL_image.h>
 #include <thread>
 #include "ColorPalette.h"
+#include "CUDA/libraryMandelbrotCXXAPI.h"
 
 typedef float float512 __attribute__((ext_vector_type(512)));
 typedef float float32 __attribute__((ext_vector_type(32)));
 typedef float float16 __attribute__((ext_vector_type(16)));
 typedef float float8 __attribute__((ext_vector_type(8)));
-typedef float float4 __attribute__((ext_vector_type(4)));
-typedef float float2 __attribute__((ext_vector_type(2)));
+typedef float float4Packed __attribute__((ext_vector_type(4)));
+typedef float float2Packed __attribute__((ext_vector_type(2)));
 typedef int int512 __attribute__((ext_vector_type(512)));
 typedef int int32 __attribute__((ext_vector_type(32)));
 typedef int int16 __attribute__((ext_vector_type(16)));
 typedef int int8 __attribute__((ext_vector_type(8)));
-typedef int int4 __attribute__((ext_vector_type(4)));
-typedef int int2 __attribute__((ext_vector_type(2)));
+typedef int int4Packed __attribute__((ext_vector_type(4)));
+typedef int int2Packed __attribute__((ext_vector_type(2)));
 typedef long long32 __attribute__((ext_vector_type(32)));
 typedef long long16 __attribute__((ext_vector_type(16)));
 typedef long long8 __attribute__((ext_vector_type(8)));
-typedef long long4 __attribute__((ext_vector_type(4)));
-typedef long long2 __attribute__((ext_vector_type(2)));
-typedef double double2 __attribute__((ext_vector_type(2)));
-typedef double double4 __attribute__((ext_vector_type(4)));
+typedef long long4Packed __attribute__((ext_vector_type(4)));
+typedef long long2Packed __attribute__((ext_vector_type(2)));
+typedef double double2Packed __attribute__((ext_vector_type(2)));
+typedef double double4Packed __attribute__((ext_vector_type(4)));
 typedef double double8 __attribute__((ext_vector_type(8)));
 typedef double double16 __attribute__((ext_vector_type(16)));
 typedef double double32 __attribute__((ext_vector_type(32)));
@@ -108,7 +109,7 @@ SDL_Surface *showPalette(int pNo) {
 
     for (int i = 0; i < ColorPaletteUF::colorsLength; i++) {
         for (int j = 0; j < height; j++)
-            setPixel(surface, i % surface->w, height * 2 + (i / surface->w) * height + j, palette.color(i, ColorPaletteUF::colorsLength, {-0.70, 0.6}));
+            setPixel(surface, i % surface->w, height * 2 + (i / surface->w) * height + j, palette.color<float>(i, ColorPaletteUF::colorsLength, {-0.70, 0.6}));
     }
 
     palette.dest();
@@ -158,16 +159,17 @@ void antialiasImage(SDL_Surface *surface, unsigned sampleArea, double percent){
     }
 }
 
-void mandelbrotSimple(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, int frameHeight, double rePos, double imPos, double sideWidth,
+template <typename T>
+void mandelbrotSimple(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, int frameHeight, T rePos, T imPos, T sideWidth,
                  int limit) {
-    const double imCoefCONST = sideWidth * double (frameHeight) / double(frameWidth);
+    const double imCoefCONST = sideWidth * T (frameHeight) / T(frameWidth);
     for (int h = 0; h < frameHeight; h++) {
-        const double ci = -imPos + imCoefCONST * ( double(h) / double(frameHeight) - 0.5);
+        const double ci = -imPos + imCoefCONST * ( T(h) / T(frameHeight) - 0.5);
         for (int w = 0; w < frameWidth; w++) {
-            Complex c = {rePos + sideWidth * ( double(w) / double(frameWidth) - 0.5 ),
+            Complex<T> c = {rePos + sideWidth * ( T(w) / T(frameWidth) - 0.5 ),
                          ci};
             unsigned speed = 0;
-            Complex zero = {0, 0};
+            Complex<T> zero = {0, 0};
             while(speed < limit && zero.absNoSqrt() < 4 ) {
                 zero.square();
                 zero.add(c);
@@ -185,7 +187,7 @@ void threadedRend(const ColorPaletteUF& palette, SDL_Surface* image, int frameWi
                   int limit, int id=0, int threadsCount=8){
     frameWidth -= frameWidth % dSize;
     imPos *= -1;
-    const data _imCoefCONST = sideWidth * frameHeight / frameWidth;
+    const auto _imCoefCONST = sideWidth * generic(frameHeight) / generic(frameWidth);
 
     const generic r2Max = 4;
     data _adder = {};
@@ -213,7 +215,7 @@ void threadedRend(const ColorPaletteUF& palette, SDL_Surface* image, int frameWi
                 _zeroi = 2 * _zeror * _zeroi + _ci;
                 _zeror = _zeror2 - _zeroi2 + _cr;
             }
-            #pragma unroll
+            #pragma unroll 8
             for (int i = 0; i < dSize; i++) {
                 setPixel(image, w + i, h, palette.colorNoSmooth(speed[i],limit));
             }

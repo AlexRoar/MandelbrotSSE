@@ -7,7 +7,8 @@
 
 #include <cstdlib>
 #include <SDL.h>
-#include "Complex.h"
+#include <SDL_image.h>
+#include "CUDA/Complex.cu"
 
 struct ColorPaletteUF {
     struct ColorsPoints {
@@ -210,14 +211,16 @@ struct ColorPaletteUF {
         return a < b ? a : b;
     }
 
-    [[nodiscard]] Uint32 color(int i, int scale, Complex val) const {
-        float nsmooth = i;
+    template <typename c_type>
+    [[nodiscard]] Uint32 color(int i, int scale, Complex<c_type> val) const {
+        c_type nsmooth = i;
         if (val.abs() > 1)
-            nsmooth = float(i + 1) - float(log2(log(val.abs())));
-        int colorI = int(nsmooth / float(scale) * float(colorsLength - 1)) % colorsLength;
+            nsmooth = c_type(i + 1) - c_type(log2(log(val.abs())));
+        int colorI = int(nsmooth / c_type(scale) * c_type(colorsLength - 1)) % colorsLength;
         return colors[colorI];
     };
 
+    __device__ __host__
     [[nodiscard]] Uint32 colorNoSmooth(int i, int scale) const {
         int colorI = int(float(i) / float(scale) * float(colorsLength - 1));
         return colors[colorI % colorsLength];

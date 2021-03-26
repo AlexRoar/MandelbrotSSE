@@ -4,7 +4,7 @@
 
 #ifndef MANDELBROT_MANDUTILS_H
 #define MANDELBROT_MANDUTILS_H
-#include "Complex.h"
+#include "CUDA/Complex.cuh"
 #include <SDL.h>
 #include "ColorPalette.h"
 
@@ -26,9 +26,10 @@ timersub(&tval_after, &tval_before, &tval_result);\
 ended = true;\
 } while(0)
 
-unsigned mandelbrotSpeed(unsigned limitIt, double limitSphere, Complex& c){
+template <typename T>
+unsigned mandelbrotSpeed(unsigned limitIt, double limitSphere, Complex<T>& c){
     unsigned speed = 0;
-    Complex zero = {0, 0};
+    Complex<T> zero = {0, 0};
     while(speed < limitIt && zero.abs() < limitSphere ) {
         zero.square();
         zero.add(c);

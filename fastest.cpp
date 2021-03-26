@@ -4,8 +4,8 @@
 #include <sys/time.h>
 
 
-constexpr int frameWidth = 1920 * 16;
-constexpr int frameHeight = 1080 * 16;
+constexpr int frameWidth = 1920 * 4;
+constexpr int frameHeight = 1080 * 4;
 
 constexpr double rePos = -0.027844723880907473745;
 constexpr double imPos = 0.69489971613660528327;
@@ -17,7 +17,7 @@ int main() {
     ColorPaletteUF palette = {};
     palette.init(0);
     const auto fastest = mandelbrotVectored<double16, long16, double, 16>;
-
+    const auto fastestFloat = mandelbrotVectored<float8, int8, float, 8>;
     int thCount = 8;
 
     TIME({
@@ -25,7 +25,15 @@ int main() {
              SET_TIME;
 //             antialiasImage(image, 1, 0.4);
              saveSurface(image, "fastest.png");
-         }, "\nFastest: ");
+         }, "Fastest: ");
+    const auto fastestCuda = mandelbrotRender<double>;
+
+    TIME({
+             fastestCuda(palette, image, frameWidth, frameHeight, rePos, imPos, sideWidth, limitIter);
+             SET_TIME;
+//             antialiasImage(image, 1, 0.4);
+             saveSurface(image, "fastestCuda.png");
+         }, "Fastest Cuda: ");
     palette.dest();
     palette.init(1);
     SDL_FreeSurface(image);

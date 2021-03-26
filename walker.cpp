@@ -1,17 +1,13 @@
 #include "src/mandutils.h"
-#include "src/Graphics.h"
-#include "src/ComplexSSE.h"
 #include "src/SDLHandlers.h"
+#include "src/ComplexSSE.h"
 #include <cstdio>
 #include <SDL.h>
-#include "src/CUDA/CUDACommon.cuh"
 
 
 bool init(SDL_Window *&pWindow, SDL_Renderer *&pRenderer);
 
 void close(SDL_Window *pWindow, SDL_Renderer *pRenderer);
-
-void PrintKeyInfo(SDL_KeyboardEvent *key);
 
 
 int main() {
@@ -21,7 +17,6 @@ int main() {
 
 //    mandelbrotCUDA();
 
-    thisApp.pWindow = pWindow;
     thisApp.pWindow = pWindow;
     thisApp.image = SDL_GetWindowSurface(pWindow);
     thisApp.palette.init(thisApp.pNum);
@@ -41,6 +36,22 @@ int main() {
             switch (e.type) {
                 case SDL_QUIT: {
                     quit = true;
+                    break;
+                }
+                case SDL_WINDOWEVENT: {
+                    if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        printf("Resized\n");
+                        pWindow = SDL_GetWindowFromID(e.window.windowID);
+                        if (SDL_GetDesktopDisplayMode(0, &thisApp.dm)) {
+                            printf("Error getting desktop display mode\n");
+                            return EXIT_FAILURE;
+                        }
+                        thisApp.pWindow = pWindow;
+                        SDL_GetWindowSize(thisApp.pWindow, &thisApp.frameWidth, &thisApp.frameHeight);
+                        thisApp.image = SDL_GetWindowSurface(pWindow);
+                        rerender(pWindow, pRenderer, thisApp.image);
+                        SDL_UpdateWindowSurface(pWindow);
+                    }
                     break;
                 }
                 case SDL_KEYDOWN: {
@@ -85,7 +96,7 @@ void PrintKeyInfo(SDL_KeyboardEvent *key) {
 bool init(SDL_Window *&pWindow, SDL_Renderer *&pRenderer) {
     SDL_Init(SDL_INIT_VIDEO);
     pWindow = SDL_CreateWindow("Mandelbrot", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, thisApp.frameWidth,
-                               thisApp.frameHeight, 0);
+                               thisApp.frameHeight, SDL_WINDOW_RESIZABLE);
 //    SDL_CreateWindowAndRenderer(thisApp.frameWidth, thisApp.frameHeight, 0, &pWindow, &pRenderer);
     SDL_SetWindowFullscreen(pWindow, 0);
     SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 255);

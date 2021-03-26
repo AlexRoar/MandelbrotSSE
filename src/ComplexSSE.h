@@ -83,7 +83,7 @@ void mandelbrotSSEFl(const ColorPaletteUF& palette, SDL_Surface* image, int fram
     }
 }
 
-void  mandelbrotSSEFlSmooth(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, const int frameHeight, float rePos, float imPos, const float sideWidth, int limit, float r2MaxFloat = 4){
+void mandelbrotSSEFlSmooth(const ColorPaletteUF& palette, SDL_Surface* image, int frameWidth, const int frameHeight, float rePos, float imPos, const float sideWidth, int limit, float r2MaxFloat = 4){
     const int SSE_size = 4;
     frameWidth -= frameWidth % SSE_size;
     imPos *=-1;
@@ -105,7 +105,7 @@ void  mandelbrotSSEFlSmooth(const ColorPaletteUF& palette, SDL_Surface* image, i
 
     U32 Nints __attribute__((aligned(16))) = {};
 
-    Complex onexit[SSE_size] = {};
+    Complex<double> onexit[SSE_size] = {};
     __m128 onExitR = _mm_set_ps1(0);
     __m128 onExitI = _mm_set_ps1(0);
     for (int h = 0; h < frameHeight; h++) {
@@ -265,7 +265,7 @@ void  mandelbrotSSEDlSmooth(const ColorPaletteUF& palette, SDL_Surface* image, i
 
     U32 Nints __attribute__((aligned(16))) = {};
 
-    Complex onexit[SSE_size] = {};
+    Complex<double> onexit[SSE_size] = {};
     for (int h = 0; h < frameHeight; h++) {
         __m128 imCoefStored = _mm_set_pd1(float(h));
         imCoefStored = _mm_div_pd(imCoefStored, FHVector); // [h, h, h, h] / frameHeight

@@ -5,11 +5,14 @@
 #ifndef MANDELBROT_SDLHANDLERS_H
 #define MANDELBROT_SDLHANDLERS_H
 #include <SDL.h>
+#include "CUDA/libraryMandelbrotCXXAPI.h"
+#include "Graphics.h"
+#include "ComplexSSE.h"
 
 struct App {
     bool smooth = false;
-    int fastestModeDs = 0;
-    int fastestModePs = 1;
+    int fastestModeDs = 2;
+    int fastestModePs = 2;
     double switchWidth = 9.35799e-05;
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
@@ -18,8 +21,8 @@ struct App {
     double moveSpeed = 50;
     double limitSpeed = 1.15;
     bool antiAlias = false;
-    int frameWidth = 640;
-    int frameHeight = 420;
+    int frameWidth = 640 * 2;
+    int frameHeight = 420 * 2;
     int pNum = 0;
     SDL_DisplayMode dm;
     ColorPaletteUF palette = {};
@@ -59,6 +62,18 @@ void rerender(SDL_Window *pWindow, SDL_Renderer *pRenderer, SDL_Surface *image) 
                 break;
             }
 
+            case 2: {
+                printf("CUDA float render type\n");
+                mandelbrotRender<float>(thisApp.palette, image,
+                                 thisApp.frameWidth,
+                                 thisApp.frameHeight,
+                                 thisApp.rePos,
+                                 thisApp.imPos,
+                                 thisApp.sideWidth,
+                                 thisApp.limitIter);
+                break;
+            }
+
             default: {
                 thisApp.renderType = 0;
                 rerender(pWindow, pRenderer, image);
@@ -89,6 +104,17 @@ void rerender(SDL_Window *pWindow, SDL_Renderer *pRenderer, SDL_Surface *image) 
                                                               thisApp.imPos,
                                                               thisApp.sideWidth,
                                                               thisApp.limitIter);
+                break;
+            }
+            case 2: {
+                printf("CUDA double render type\n");
+                mandelbrotRender<double>(thisApp.palette, image,
+                                        thisApp.frameWidth,
+                                        thisApp.frameHeight,
+                                        thisApp.rePos,
+                                        thisApp.imPos,
+                                        thisApp.sideWidth,
+                                        thisApp.limitIter);
                 break;
             }
             default: {
